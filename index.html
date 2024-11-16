@@ -131,6 +131,28 @@
         .fullscreen-btn:hover {
             background-color: #17b0c5;
         }
+
+        /* Upload Button */
+        .upload-btn {
+            background-color: #1a9fb7;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 15px;
+        }
+
+        .upload-btn:hover {
+            background-color: #17b0c5;
+        }
+
+        /* Hidden file input */
+        #file-input {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -138,9 +160,7 @@
     <div class="player-container">
         <!-- Video / Audio element -->
         <video id="media" controls>
-            <source src="your-video.mp4" type="video/mp4">
-            <source src="your-video.webm" type="video/webm">
-            <source src="your-video.ogv" type="video/ogg">
+            <source id="mediaSource" src="" type="">
             Your browser does not support the video tag.
         </video>
 
@@ -162,6 +182,10 @@
             <!-- Fullscreen Button -->
             <button id="fullscreenBtn" class="fullscreen-btn">&#9744;</button>
         </div>
+
+        <!-- Upload Button -->
+        <button id="uploadBtn" class="upload-btn">Upload Media</button>
+        <input type="file" id="file-input" accept="audio/*, video/*">
     </div>
 
     <script>
@@ -171,6 +195,9 @@
         const seekBar = document.getElementById("seekBar");
         const volumeSlider = document.getElementById("volume");
         const fullscreenBtn = document.getElementById("fullscreenBtn");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const fileInput = document.getElementById("file-input");
+        const mediaSource = document.getElementById("mediaSource");
 
         // Play/Pause functionality
         playPauseBtn.addEventListener("click", () => {
@@ -217,6 +244,26 @@
         // Adjust progress bar when media is loaded
         media.addEventListener("loadeddata", () => {
             seekBar.value = (media.currentTime / media.duration) * 100;
+        });
+
+        // Upload button to trigger file input
+        uploadBtn.addEventListener("click", () => {
+            fileInput.click();  // Open the file dialog when the user clicks the "Upload" button
+        });
+
+        // File input change event (handle file selection)
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+
+            if (file) {
+                const fileURL = URL.createObjectURL(file);
+
+                // Set the media source to the selected file
+                mediaSource.src = fileURL;
+                media.load();
+                media.play();
+                playPauseBtn.innerHTML = "&#10074;&#10074;"; // Change to pause icon
+            }
         });
     </script>
 
