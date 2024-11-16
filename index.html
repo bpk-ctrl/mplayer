@@ -55,49 +55,6 @@
             border-radius: 10px;
         }
 
-        /* Play/Pause button */
-        .play-pause-btn {
-            background-color: #1a9fb7; /* Turquoise accent */
-            border: none;
-            color: white;
-            font-size: 26px;
-            padding: 12px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .play-pause-btn:hover {
-            background-color: #17b0c5;
-        }
-
-        /* Progress bar */
-        .progress-bar {
-            width: 100%;
-            height: 5px;
-            background-color: #444;
-            border-radius: 5px;
-            margin: 0 15px;
-            position: relative;
-        }
-
-        .progress-bar input {
-            background-color: #1a9fb7;
-            height: 100%;
-            width: 100%;
-            border-radius: 5px;
-            appearance: none;
-        }
-
-        .progress-bar input[type="range"]::-webkit-slider-thumb {
-            background-color: #fff;
-            border-radius: 50%;
-            height: 14px;
-            width: 14px;
-            cursor: pointer;
-        }
-
         /* Volume control */
         .volume-slider {
             width: 120px;
@@ -168,22 +125,14 @@
 <body>
 
     <div class="player-container">
-        <!-- Video / Audio element -->
+        <!-- Video / Audio element with browser default controls -->
         <video id="media" controls>
             <source id="mediaSource" src="" type="">
             Your browser does not support the video tag.
         </video>
 
-        <!-- Controls -->
+        <!-- Controls (Volume, Fullscreen, Upload) -->
         <div class="controls">
-            <!-- Play/Pause Button -->
-            <button id="playPauseBtn" class="play-pause-btn">&#9658;</button>
-
-            <!-- Progress Bar -->
-            <div class="progress-bar">
-                <input type="range" id="seekBar" value="0" step="1" max="100">
-            </div>
-
             <!-- Volume Control -->
             <div class="volume-slider">
                 <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
@@ -201,36 +150,11 @@
     <script>
         // Get DOM elements
         const media = document.getElementById("media");
-        const playPauseBtn = document.getElementById("playPauseBtn");
-        const seekBar = document.getElementById("seekBar");
-        const volumeSlider = document.getElementById("volume");
         const fullscreenBtn = document.getElementById("fullscreenBtn");
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
+        const volumeSlider = document.getElementById("volume");
         const mediaSource = document.getElementById("mediaSource");
-
-        // Play/Pause functionality
-        playPauseBtn.addEventListener("click", () => {
-            if (media.paused) {
-                media.play();
-                playPauseBtn.innerHTML = "&#10074;&#10074;"; // Pause symbol
-            } else {
-                media.pause();
-                playPauseBtn.innerHTML = "&#9658;"; // Play symbol
-            }
-        });
-
-        // Update progress bar
-        media.addEventListener("timeupdate", () => {
-            const value = (media.currentTime / media.duration) * 100;
-            seekBar.value = value;
-        });
-
-        // Seek functionality
-        seekBar.addEventListener("input", () => {
-            const seekTo = (seekBar.value / 100) * media.duration;
-            media.currentTime = seekTo;
-        });
 
         // Volume control functionality
         volumeSlider.addEventListener("input", () => {
@@ -244,16 +168,6 @@
             } else {
                 document.exitFullscreen();
             }
-        });
-
-        // Handle media load for initial play state
-        media.addEventListener("loadedmetadata", () => {
-            seekBar.max = media.duration;
-        });
-
-        // Adjust progress bar when media is loaded
-        media.addEventListener("loadeddata", () => {
-            seekBar.value = (media.currentTime / media.duration) * 100;
         });
 
         // Upload button to trigger file input
@@ -272,7 +186,6 @@
                 mediaSource.src = fileURL;
                 media.load();
                 media.play();
-                playPauseBtn.innerHTML = "&#10074;&#10074;"; // Change to pause icon
             }
         });
     </script>
