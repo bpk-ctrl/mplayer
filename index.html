@@ -33,6 +33,8 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             position: relative;
             transition: all 0.3s ease-in-out;
+            padding: 20px;
+            text-align: center;
         }
 
         /* Video or audio element styling */
@@ -45,56 +47,12 @@
             background-color: #000;
         }
 
-        /* Controls container */
-        .controls {
-            background: linear-gradient(135deg, #2a2a2a, #121212);
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 10px;
-        }
-
-        /* Volume control */
-        .volume-slider {
-            width: 120px;
-            background-color: #444;
-            height: 5px;
-            border-radius: 5px;
-            position: relative;
-        }
-
-        .volume-slider input {
-            background-color: #1a9fb7;
-            height: 100%;
+        /* Image element styling */
+        img {
             width: 100%;
-            border-radius: 5px;
-            appearance: none;
-        }
-
-        .volume-slider input[type="range"]::-webkit-slider-thumb {
-            background-color: #fff;
-            border-radius: 50%;
-            height: 14px;
-            width: 14px;
-            cursor: pointer;
-        }
-
-        /* Fullscreen button */
-        .fullscreen-btn {
-            background-color: #1a9fb7;
-            border: none;
-            color: white;
-            font-size: 20px;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .fullscreen-btn:hover {
-            background-color: #17b0c5;
+            height: auto;
+            border-radius: 15px;
+            background-color: #000;
         }
 
         /* Upload Button */
@@ -109,6 +67,7 @@
             transition: background-color 0.3s ease-in-out;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             margin: 20px 0;
+            margin-left: 20px;  /* Move button slightly to the right */
         }
 
         .upload-btn:hover {
@@ -125,50 +84,26 @@
 <body>
 
     <div class="player-container">
-        <!-- Video / Audio element with browser default controls -->
-        <video id="media" controls>
-            <source id="mediaSource" src="" type="">
-            Your browser does not support the video tag.
-        </video>
-
-        <!-- Controls (Volume, Fullscreen, Upload) -->
-        <div class="controls">
-            <!-- Volume Control -->
-            <div class="volume-slider">
-                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
-            </div>
-
-            <!-- Fullscreen Button -->
-            <button id="fullscreenBtn" class="fullscreen-btn">&#9744;</button>
+        <!-- Media (video, audio, or image) will be displayed here -->
+        <div id="mediaContainer">
+            <video id="media" controls>
+                <source id="mediaSource" src="" type="">
+                Your browser does not support the video tag.
+            </video>
         </div>
 
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
-        <input type="file" id="file-input" accept="audio/*, video/*">
+        <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg">
     </div>
 
     <script>
         // Get DOM elements
+        const mediaContainer = document.getElementById("mediaContainer");
         const media = document.getElementById("media");
-        const fullscreenBtn = document.getElementById("fullscreenBtn");
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
-        const volumeSlider = document.getElementById("volume");
         const mediaSource = document.getElementById("mediaSource");
-
-        // Volume control functionality
-        volumeSlider.addEventListener("input", () => {
-            media.volume = volumeSlider.value;
-        });
-
-        // Fullscreen toggle functionality
-        fullscreenBtn.addEventListener("click", () => {
-            if (!document.fullscreenElement) {
-                media.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
 
         // Upload button to trigger file input
         uploadBtn.addEventListener("click", () => {
@@ -180,12 +115,52 @@
             const file = e.target.files[0];
 
             if (file) {
-                const fileURL = URL.createObjectURL(file);
+                const fileType = file.type;
 
-                // Set the media source to the selected file
-                mediaSource.src = fileURL;
-                media.load();
-                media.play();
+                // Check if it's an image
+                if (fileType.startsWith('image/')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
+
+                    // Create and display the image
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    mediaContainer.appendChild(img);
+                }
+                // Check if it's a video
+                else if (fileType.startsWith('video/') || file.name.endsWith('.ogg')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
+
+                    // Set the media source to the selected video
+                    const videoElement = document.createElement('video');
+                    videoElement.setAttribute('controls', 'true');
+                    const videoSource = document.createElement('source');
+                    videoSource.src = URL.createObjectURL(file);
+                    videoSource.type = fileType || 'video/ogg'; // Fallback to ogg type for video
+                    videoElement.appendChild(videoSource);
+                    mediaContainer.appendChild(videoElement);
+
+                    // Autoplay the video
+                    videoElement.play();
+                }
+                // Check if it's an audio
+                else if (fileType.startsWith('audio/') || file.name.endsWith('.ogg')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
+
+                    // Set the media source to the selected audio
+                    const audioElement = document.createElement('audio');
+                    audioElement.setAttribute('controls', 'true');
+                    const audioSource = document.createElement('source');
+                    audioSource.src = URL.createObjectURL(file);
+                    audioSource.type = fileType || 'audio/ogg'; // Fallback to ogg type for audio
+                    audioElement.appendChild(audioSource);
+                    mediaContainer.appendChild(audioElement);
+
+                    // Autoplay the audio
+                    audioElement.play();
+                }
             }
         });
     </script>
