@@ -79,6 +79,14 @@
             display: none;
         }
 
+        /* YouTube iframe styling */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+        }
+
     </style>
 </head>
 <body>
@@ -95,6 +103,8 @@
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
         <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg">
+        <!-- Or YouTube link input -->
+        <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border-radius: 5px; border: none; background-color: #333; color: white;">
     </div>
 
     <script>
@@ -103,7 +113,7 @@
         const media = document.getElementById("media");
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
-        const mediaSource = document.getElementById("mediaSource");
+        const youtubeLinkInput = document.getElementById("youtubeLink");
 
         // Upload button to trigger file input
         uploadBtn.addEventListener("click", () => {
@@ -163,6 +173,44 @@
                 }
             }
         });
+
+        // YouTube link input change event (handle YouTube URL)
+        youtubeLinkInput.addEventListener("input", (e) => {
+            const youtubeUrl = e.target.value.trim();
+
+            if (isValidYouTubeUrl(youtubeUrl)) {
+                const videoId = extractYouTubeVideoId(youtubeUrl);
+                embedYouTubeVideo(videoId);
+            } else {
+                // Clear existing media
+                mediaContainer.innerHTML = '';
+            }
+        });
+
+        // Function to validate YouTube URL (support youtube.com and youtu.be)
+        function isValidYouTubeUrl(url) {
+            const youtubeRegex = /^(https?\:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|\/)([a-zA-Z0-9_-]{11})$/;
+            return youtubeRegex.test(url);
+        }
+
+        // Function to extract the video ID from both youtube.com and youtu.be URLs
+        function extractYouTubeVideoId(url) {
+            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.*\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=))([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        // Function to embed the YouTube video
+        function embedYouTubeVideo(videoId) {
+            if (videoId) {
+                mediaContainer.innerHTML = ''; // Clear existing media
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                iframe.frameborder = "0";
+                iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+                iframe.allowfullscreen = true;
+                mediaContainer.appendChild(iframe);
+            }
+        }
     </script>
 
 </body>
