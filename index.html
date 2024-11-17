@@ -14,7 +14,6 @@
         }
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #121212;
             color: #fff;
             display: flex;
             justify-content: center;
@@ -22,6 +21,7 @@
             height: 100vh;
             margin: 0;
             background: linear-gradient(135deg, #121212, #2a2a2a);
+            transition: background 0.1s ease-in-out;
         }
 
         /* Player container */
@@ -128,6 +128,18 @@
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
         const youtubeLinkInput = document.getElementById("youtubeLink");
+
+        // Function to update the background gradient based on mouse position
+        function updateBackground(event) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            // Update background as radial gradient centered at the cursor
+            document.body.style.background = `radial-gradient(circle at ${mouseX}px ${mouseY}px, #121212, #2a2a2a)`;
+        }
+
+        // Listen for mouse movement and update the background
+        document.addEventListener('mousemove', updateBackground);
 
         // Upload button to trigger file input
         uploadBtn.addEventListener("click", () => {
