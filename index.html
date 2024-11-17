@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Media Player</title>
     <link rel="icon" href="favicon.svg" type="image/x-icon">
-    
-    <!-- Video.js CDN -->
-    <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/7.15.4/video.js"></script>
-    
     <style>
         /* Basic reset and layout */
         * {
@@ -41,12 +36,23 @@
             transition: all 0.3s ease-in-out;
             padding: 20px;
             text-align: center;
+            max-height: 80vh; /* Ensure it doesn't overflow vertically */
         }
 
-        /* Video.js player */
-        .video-js {
+        /* Video or audio element styling */
+        video, audio {
             width: 100%;
             height: 100%;
+            display: block;
+            border-bottom: 3px solid #333;
+            border-radius: 15px;
+            background-color: #000;
+        }
+
+        /* Image element styling */
+        img {
+            width: 100%;
+            height: auto;
             border-radius: 15px;
             background-color: #000;
         }
@@ -75,29 +81,53 @@
             display: none;
         }
 
+        /* YouTube iframe styling */
+        iframe {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* This maintains a 16:9 aspect ratio */
+            border: none;
+            border-radius: 15px;
+            position: relative;
+            background-color: #000;
+        }
+
+        @media (max-width: 600px) {
+            /* On smaller screens, make the iframe full width */
+            iframe {
+                width: 100%;
+                height: auto;
+                padding-bottom: 56.25%;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="player-container">
-        <!-- Video.js player will be here -->
-        <video id="media" class="video-js vjs-default-skin" controls>
-            <!-- This will be dynamically updated with the selected media -->
-        </video>
+        <!-- Media (video, audio, or image) will be displayed here -->
+        <div id="mediaContainer">
+            <video id="media" controls>
+                <source id="mediaSource" src="" type="">
+                Your browser does not support the video tag.
+            </video>
+        </div>
 
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
         <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg, .mkv">
+        <!-- Or YouTube link input -->
+        <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border-radius: 5px; border: none; background-color: #333; color: white;">
     </div>
 
     <script>
         // Get DOM elements
-        const mediaContainer = document.getElementById("media");
+        const mediaContainer = document.getElementById("mediaContainer");
+        const media = document.getElementById("media");
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
-
-        // Initialize Video.js player
-        let player = videojs(mediaContainer);
+        const youtubeLinkInput = document.getElementById("youtubeLink");
 
         // Upload button to trigger file input
         uploadBtn.addEventListener("click", () => {
@@ -111,26 +141,90 @@
             if (file) {
                 const fileType = file.type;
 
+                // Check if it's an image
+                if (fileType.startsWith('image/')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
+
+                    // Create and display the image
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    mediaContainer.appendChild(img);
+                }
                 // Check if it's a video
-                if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
-                    // Clear the existing player
-                    player.dispose();
-
-                    // Reset the video player
-                    mediaContainer.innerHTML = '<video id="media" class="video-js vjs-default-skin" controls></video>';
-
-                    // Initialize the player again with the new video source
-                    player = videojs('media');
+                else if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
 
                     // Set the media source to the selected video
-                    const videoSource = URL.createObjectURL(file);
-                    player.src({ type: fileType, src: videoSource });
+                    const videoElement = document.createElement('video');
+                    videoElement.setAttribute('controls', 'true');
+                    const videoSource = document.createElement('source');
+                    videoSource.src = URL.createObjectURL(file);
+                    videoSource.type = fileType || 'video/mkv'; // Fallback to mkv type for video
+                    videoElement.appendChild(videoSource);
+                    mediaContainer.appendChild(videoElement);
 
-                    // Play the video
-                    player.play();
+                    // Autoplay the video
+                    videoElement.play();
+                }
+                // Check if it's an audio
+                else if (fileType.startsWith('audio/') || file.name.endsWith('.ogg')) {
+                    // Clear any existing media
+                    mediaContainer.innerHTML = '';
+
+                    // Set the media source to the selected audio
+                    const audioElement = document.createElement('audio');
+                    audioElement.setAttribute('controls', 'true');
+                    const audioSource = document.createElement('source');
+                    audioSource.src = URL.createObjectURL(file);
+                    audioSource.type = fileType || 'audio/ogg'; // Fallback to ogg type for audio
+                    audioElement.appendChild(audioSource);
+                    mediaContainer.appendChild(audioElement);
+
+                    // Autoplay the audio
+                    audioElement.play();
                 }
             }
         });
+
+        // YouTube link input change event (handle YouTube URL)
+        youtubeLinkInput.addEventListener("input", (e) => {
+            const youtubeUrl = e.target.value.trim();
+
+            if (isValidYouTubeUrl(youtubeUrl)) {
+                const videoId = extractYouTubeVideoId(youtubeUrl);
+                embedYouTubeVideo(videoId);
+            } else {
+                // Clear existing media
+                mediaContainer.innerHTML = '';
+            }
+        });
+
+        // Function to validate YouTube URL (support youtube.com and youtu.be)
+        function isValidYouTubeUrl(url) {
+            const youtubeRegex = /^(https?\:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|\/)([a-zA-Z0-9_-]{11})$/;
+            return youtubeRegex.test(url);
+        }
+
+        // Function to extract the video ID from both youtube.com and youtu.be URLs
+        function extractYouTubeVideoId(url) {
+            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.*\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=))([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        // Function to embed the YouTube video
+        function embedYouTubeVideo(videoId) {
+            if (videoId) {
+                mediaContainer.innerHTML = ''; // Clear existing media
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                iframe.frameborder = "0";
+                iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+                iframe.allowfullscreen = true; // Allow fullscreen
+                mediaContainer.appendChild(iframe);
+            }
+        }
     </script>
 
 </body>
