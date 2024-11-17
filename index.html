@@ -39,7 +39,7 @@
             max-height: 80vh; /* Ensure it doesn't overflow vertically */
         }
 
-        /* Video or audio element styling */
+        /* Media elements styling */
         video, audio {
             width: 100%;
             height: 100%;
@@ -49,7 +49,6 @@
             background-color: #000;
         }
 
-        /* Image element styling */
         img {
             width: 100%;
             height: auto;
@@ -69,7 +68,7 @@
             transition: background-color 0.3s ease-in-out;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             margin: 20px 0;
-            margin-left: 20px;  /* Move button slightly to the right */
+            margin-left: 20px;
         }
 
         .upload-btn:hover {
@@ -81,24 +80,27 @@
             display: none;
         }
 
-        /* YouTube iframe styling */
-        iframe {
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* This maintains a 16:9 aspect ratio */
-            border: none;
-            border-radius: 15px;
-            position: relative;
-            background-color: #000;
+        /* Context menu styles */
+        .context-menu {
+            position: absolute;
+            display: none;
+            background-color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
         }
 
-        @media (max-width: 600px) {
-            /* On smaller screens, make the iframe full width */
-            iframe {
-                width: 100%;
-                height: auto;
-                padding-bottom: 56.25%;
-            }
+        .context-menu li {
+            padding: 8px 12px;
+            cursor: pointer;
+            list-style-type: none;
+            color: white;
+            border-radius: 4px;
+        }
+
+        .context-menu li:hover {
+            background-color: #555;
         }
 
     </style>
@@ -117,9 +119,13 @@
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
         <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg, .mkv">
-        <!-- Or YouTube link input -->
         <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border-radius: 5px; border: none; background-color: #333; color: white;">
     </div>
+
+    <!-- Custom context menu -->
+    <ul class="context-menu" id="contextMenu">
+        <li id="downloadOption">Download</li>
+    </ul>
 
     <script>
         // Get DOM elements
@@ -128,13 +134,13 @@
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
         const youtubeLinkInput = document.getElementById("youtubeLink");
+        const contextMenu = document.getElementById("contextMenu");
+        let currentMedia = null;
 
         // Function to update the background gradient based on mouse position
         function updateBackground(event) {
             const mouseX = event.clientX;
             const mouseY = event.clientY;
-
-            // Update background as radial gradient centered at the cursor
             document.body.style.background = `radial-gradient(circle at ${mouseX}px ${mouseY}px, #121212, #2a2a2a)`;
         }
 
@@ -155,47 +161,37 @@
 
                 // Check if it's an image
                 if (fileType.startsWith('image/')) {
-                    // Clear any existing media
-                    mediaContainer.innerHTML = '';
-
-                    // Create and display the image
+                    mediaContainer.innerHTML = '';  // Clear existing media
                     const img = document.createElement('img');
                     img.src = URL.createObjectURL(file);
                     mediaContainer.appendChild(img);
+                    currentMedia = img;  // Store current media for context menu
                 }
                 // Check if it's a video
                 else if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
-                    // Clear any existing media
-                    mediaContainer.innerHTML = '';
-
-                    // Set the media source to the selected video
+                    mediaContainer.innerHTML = '';  // Clear existing media
                     const videoElement = document.createElement('video');
                     videoElement.setAttribute('controls', 'true');
                     const videoSource = document.createElement('source');
                     videoSource.src = URL.createObjectURL(file);
-                    videoSource.type = fileType || 'video/mkv'; // Fallback to mkv type for video
+                    videoSource.type = fileType || 'video/mkv';  // Fallback to mkv type for video
                     videoElement.appendChild(videoSource);
                     mediaContainer.appendChild(videoElement);
-
-                    // Autoplay the video
                     videoElement.play();
+                    currentMedia = videoElement;  // Store current media for context menu
                 }
                 // Check if it's an audio
                 else if (fileType.startsWith('audio/') || file.name.endsWith('.ogg')) {
-                    // Clear any existing media
-                    mediaContainer.innerHTML = '';
-
-                    // Set the media source to the selected audio
+                    mediaContainer.innerHTML = '';  // Clear existing media
                     const audioElement = document.createElement('audio');
                     audioElement.setAttribute('controls', 'true');
                     const audioSource = document.createElement('source');
                     audioSource.src = URL.createObjectURL(file);
-                    audioSource.type = fileType || 'audio/ogg'; // Fallback to ogg type for audio
+                    audioSource.type = fileType || 'audio/ogg';  // Fallback to ogg type for audio
                     audioElement.appendChild(audioSource);
                     mediaContainer.appendChild(audioElement);
-
-                    // Autoplay the audio
                     audioElement.play();
+                    currentMedia = audioElement;  // Store current media for context menu
                 }
             }
         });
@@ -208,18 +204,55 @@
                 const videoId = extractYouTubeVideoId(youtubeUrl);
                 embedYouTubeVideo(videoId);
             } else {
-                // Clear existing media
-                mediaContainer.innerHTML = '';
+                mediaContainer.innerHTML = '';  // Clear existing media
             }
         });
 
-        // Function to validate YouTube URL (support youtube.com and youtu.be)
+        // Right-click menu (prevent default and show custom menu)
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const menu = document.getElementById("contextMenu");
+            menu.style.top = `${e.clientY}px`;
+            menu.style.left = `${e.clientX}px`;
+            menu.style.display = 'block';
+        });
+
+        // Close the context menu when clicking anywhere
+        document.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+
+        // Download function for current media
+        document.getElementById('downloadOption').addEventListener('click', () => {
+            if (currentMedia) {
+                let mediaUrl;
+                let mediaType = '';
+
+                if (currentMedia.tagName.toLowerCase() === 'img') {
+                    mediaUrl = currentMedia.src;
+                    mediaType = 'image/jpeg';
+                } else if (currentMedia.tagName.toLowerCase() === 'video') {
+                    mediaUrl = currentMedia.querySelector('source').src;
+                    mediaType = 'video/mp4';
+                } else if (currentMedia.tagName.toLowerCase() === 'audio') {
+                    mediaUrl = currentMedia.querySelector('source').src;
+                    mediaType = 'audio/mp3';
+                }
+
+                const a = document.createElement('a');
+                a.href = mediaUrl;
+                a.download = mediaUrl.split('/').pop();  // Set the download filename
+                a.click();
+            }
+        });
+
+        // Function to validate YouTube URL
         function isValidYouTubeUrl(url) {
             const youtubeRegex = /^(https?\:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|\/)([a-zA-Z0-9_-]{11})$/;
             return youtubeRegex.test(url);
         }
 
-        // Function to extract the video ID from both youtube.com and youtu.be URLs
+        // Function to extract the video ID from a YouTube URL
         function extractYouTubeVideoId(url) {
             const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.*\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=))([a-zA-Z0-9_-]{11})/);
             return match ? match[1] : null;
@@ -228,13 +261,14 @@
         // Function to embed the YouTube video
         function embedYouTubeVideo(videoId) {
             if (videoId) {
-                mediaContainer.innerHTML = ''; // Clear existing media
+                mediaContainer.innerHTML = '';  // Clear existing media
                 const iframe = document.createElement('iframe');
                 iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
                 iframe.frameborder = "0";
                 iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
                 iframe.allowfullscreen = true; // Allow fullscreen
                 mediaContainer.appendChild(iframe);
+                currentMedia = iframe;  // Store current media for context menu
             }
         }
     </script>
