@@ -116,7 +116,7 @@
 
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
-        <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg">
+        <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg, .mkv">
         <!-- Or YouTube link input -->
         <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border-radius: 5px; border: none; background-color: #333; color: white;">
     </div>
@@ -152,7 +152,7 @@
                     mediaContainer.appendChild(img);
                 }
                 // Check if it's a video
-                else if (fileType.startsWith('video/') || file.name.endsWith('.ogg')) {
+                else if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
                     // Clear any existing media
                     mediaContainer.innerHTML = '';
 
@@ -161,7 +161,7 @@
                     videoElement.setAttribute('controls', 'true');
                     const videoSource = document.createElement('source');
                     videoSource.src = URL.createObjectURL(file);
-                    videoSource.type = fileType || 'video/ogg'; // Fallback to ogg type for video
+                    videoSource.type = fileType || 'video/mkv'; // Fallback to mkv type for video
                     videoElement.appendChild(videoSource);
                     mediaContainer.appendChild(videoElement);
 
