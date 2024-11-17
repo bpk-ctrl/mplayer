@@ -80,6 +80,13 @@
             display: none;
         }
 
+        /* Error message styles */
+        .error-message {
+            color: red;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
         /* Context menu styles */
         .context-menu {
             position: absolute;
@@ -103,6 +110,75 @@
             background-color: #555;
         }
 
+        /* Mobile Responsive Adjustments */
+        @media screen and (max-width: 768px) {
+            body {
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            .player-container {
+                width: 100%;
+                padding: 10px;
+                max-height: none; /* Allow container to stretch */
+                border-radius: 15px;
+            }
+
+            /* Adjust button size and spacing */
+            .upload-btn {
+                width: 100%;
+                padding: 14px;
+                margin-left: 0;
+                font-size: 18px;
+            }
+
+            #youtubeLink {
+                width: 100%;
+                padding: 14px;
+                font-size: 18px;
+                margin-top: 10px;
+            }
+
+            video, audio, img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 10px;
+            }
+
+            .context-menu {
+                width: 200px;
+            }
+        }
+
+        /* For very small screens (phones in portrait mode) */
+        @media screen and (max-width: 480px) {
+            .upload-btn {
+                padding: 16px;
+                font-size: 20px;
+            }
+
+            #youtubeLink {
+                padding: 16px;
+                font-size: 20px;
+            }
+        }
+
+        /* Play button styles */
+        .play-btn {
+            background-color: #1a9fb7;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+            margin-left: 10px;
+        }
+
+        .play-btn:hover {
+            background-color: #17b0c5;
+        }
     </style>
 </head>
 <body>
@@ -119,7 +195,15 @@
         <!-- Upload Button -->
         <button id="uploadBtn" class="upload-btn">Upload Media</button>
         <input type="file" id="file-input" accept="image/*, video/*, audio/*, .ogg, .mkv">
-        <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border-radius: 5px; border: none; background-color: #333; color: white;">
+        
+        <!-- YouTube Link Input -->
+        <div style="display: flex; align-items: center; margin-top: 10px;">
+            <input type="text" id="youtubeLink" placeholder="Enter YouTube URL" style="padding: 12px; font-size: 16px; width: 70%; border-radius: 5px; border: none; background-color: #333; color: white;">
+            <button id="playBtn" class="play-btn">Play</button>
+        </div>
+
+        <!-- Error message display -->
+        <div id="error-message" class="error-message"></div>
     </div>
 
     <!-- Custom context menu -->
@@ -134,7 +218,9 @@
         const uploadBtn = document.getElementById("uploadBtn");
         const fileInput = document.getElementById("file-input");
         const youtubeLinkInput = document.getElementById("youtubeLink");
+        const playBtn = document.getElementById("playBtn");
         const contextMenu = document.getElementById("contextMenu");
+        const errorMessageDiv = document.getElementById("error-message");
         let currentMedia = null;
 
         // Function to update the background gradient based on mouse position
@@ -156,43 +242,51 @@
         fileInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
 
-            if (file) {
-                const fileType = file.type;
+            if (!file) {
+                showError("No file selected.");
+                return;
+            }
 
-                // Check if it's an image
-                if (fileType.startsWith('image/')) {
-                    mediaContainer.innerHTML = '';  // Clear existing media
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    mediaContainer.appendChild(img);
-                    currentMedia = img;  // Store current media for context menu
-                }
-                // Check if it's a video
-                else if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
-                    mediaContainer.innerHTML = '';  // Clear existing media
-                    const videoElement = document.createElement('video');
-                    videoElement.setAttribute('controls', 'true');
-                    const videoSource = document.createElement('source');
-                    videoSource.src = URL.createObjectURL(file);
-                    videoSource.type = fileType || 'video/mkv';  // Fallback to mkv type for video
-                    videoElement.appendChild(videoSource);
-                    mediaContainer.appendChild(videoElement);
-                    videoElement.play();
-                    currentMedia = videoElement;  // Store current media for context menu
-                }
-                // Check if it's an audio
-                else if (fileType.startsWith('audio/') || file.name.endsWith('.ogg')) {
-                    mediaContainer.innerHTML = '';  // Clear existing media
-                    const audioElement = document.createElement('audio');
-                    audioElement.setAttribute('controls', 'true');
-                    const audioSource = document.createElement('source');
-                    audioSource.src = URL.createObjectURL(file);
-                    audioSource.type = fileType || 'audio/ogg';  // Fallback to ogg type for audio
-                    audioElement.appendChild(audioSource);
-                    mediaContainer.appendChild(audioElement);
-                    audioElement.play();
-                    currentMedia = audioElement;  // Store current media for context menu
-                }
+            const fileType = file.type;
+
+            // Check if it's an image
+            if (fileType.startsWith('image/')) {
+                mediaContainer.innerHTML = '';  // Clear existing media
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                mediaContainer.appendChild(img);
+                currentMedia = img;  // Store current media for context menu
+                errorMessageDiv.innerHTML = '';  // Clear any previous error
+            }
+            // Check if it's a video
+            else if (fileType.startsWith('video/') || file.name.endsWith('.mkv') || file.name.endsWith('.ogg')) {
+                mediaContainer.innerHTML = '';  // Clear existing media
+                const videoElement = document.createElement('video');
+                videoElement.setAttribute('controls', 'true');
+                const videoSource = document.createElement('source');
+                videoSource.src = URL.createObjectURL(file);
+                videoSource.type = fileType || 'video/mkv';  // Fallback to mkv type for video
+                videoElement.appendChild(videoSource);
+                mediaContainer.appendChild(videoElement);
+                videoElement.play();
+                currentMedia = videoElement;  // Store current media for context menu
+                errorMessageDiv.innerHTML = '';  // Clear any previous error
+            }
+            // Check if it's an audio
+            else if (fileType.startsWith('audio/') || file.name.endsWith('.ogg')) {
+                mediaContainer.innerHTML = '';  // Clear existing media
+                const audioElement = document.createElement('audio');
+                audioElement.setAttribute('controls', 'true');
+                const audioSource = document.createElement('source');
+                audioSource.src = URL.createObjectURL(file);
+                audioSource.type = fileType || 'audio/ogg';  // Fallback to ogg type for audio
+                audioElement.appendChild(audioSource);
+                mediaContainer.appendChild(audioElement);
+                audioElement.play();
+                currentMedia = audioElement;  // Store current media for context menu
+                errorMessageDiv.innerHTML = '';  // Clear any previous error
+            } else {
+                showError("Unsupported file type. Please upload an image, audio, or video file.");
             }
         });
 
@@ -201,12 +295,28 @@
             const youtubeUrl = e.target.value.trim();
 
             if (isValidYouTubeUrl(youtubeUrl)) {
-                const videoId = extractYouTubeVideoId(youtubeUrl);
-                embedYouTubeVideo(videoId);
+                errorMessageDiv.innerHTML = '';  // Clear any previous error
             } else {
-                mediaContainer.innerHTML = '';  // Clear existing media
+                errorMessageDiv.innerHTML = 'Invalid YouTube URL. Please enter a valid URL.';
             }
         });
+
+        // Play button event for YouTube video
+        playBtn.addEventListener("click", () => {
+            const youtubeUrl = youtubeLinkInput.value.trim();
+            if (isValidYouTubeUrl(youtubeUrl)) {
+                const videoId = extractYouTubeVideoId(youtubeUrl);
+                embedYouTubeVideo(videoId);
+                errorMessageDiv.innerHTML = '';  // Clear any previous error
+            } else {
+                errorMessageDiv.innerHTML = 'Invalid YouTube URL. Please enter a valid URL.';
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            errorMessageDiv.innerHTML = message;
+        }
 
         // Right-click menu (prevent default and show custom menu)
         document.addEventListener('contextmenu', (e) => {
@@ -243,6 +353,8 @@
                 a.href = mediaUrl;
                 a.download = mediaUrl.split('/').pop();  // Set the download filename
                 a.click();
+            } else {
+                showError("No media available to download.");
             }
         });
 
@@ -269,6 +381,8 @@
                 iframe.allowfullscreen = true; // Allow fullscreen
                 mediaContainer.appendChild(iframe);
                 currentMedia = iframe;  // Store current media for context menu
+            } else {
+                showError("Failed to load YouTube video.");
             }
         }
     </script>
